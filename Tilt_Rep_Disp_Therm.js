@@ -6,6 +6,10 @@ var st;
  if (st=="undefined") {
  st=70;
  }
+var toggle;
+ if (toggle=="undefined") {
+ toggle=0;
+ }
 
 function arrayBufferToHex (arrayBuffer){
   return (new Uint8Array(arrayBuffer)).slice().map(x=>(256+x).toString(16).substr(-2)).join("");
@@ -43,26 +47,32 @@ var t = majorValue;
   g.drawString("Temp. (pre-cal):",0,24);
   // Use a large font for the value itself
   g.setFontVector(16);
-  g.drawString(t + "캟", (g.getWidth()-g.stringWidth(t + " F"))/1,30);
+  g.drawString(t + "째F", (g.getWidth()-g.stringWidth(t + " F"))/1,30);
   // Display status
   g.setFontBitmap();
   g.drawString("Set Temp:",0,46);
   g.setFontVector(10);
-  g.drawString(" " + st +"캟",0,52);
+  g.drawString(" " + st +"째F",0,52);
 
       //Test for relays
      g.setFontBitmap();
       if (t>st+2) {
     digitalWrite(D4,1);
-    digitalWrite(D5, 0);
+    digitalWrite(D5, 1);
+    digitalWrite(D6, 0);
+    digitalWrite(D7, 0);
     g.drawString(" - Cooling",70,54);
   }
   else if (t<st-2) {
-    digitalWrite(D5,1);
+    digitalWrite(D6, 1);
+    digitalWrite(D7, 1);
+    digitalWrite(D5, 0);
     digitalWrite(D4, 0);
     g.drawString(" - Heating",70,54);
   }
   else {
+    digitalWrite(D6, 0);
+    digitalWrite(D7, 0);
     digitalWrite(D4, 0);
     digitalWrite(D5, 0);
     g.drawString(" - Bypass",70,54);
@@ -107,14 +117,25 @@ clearInterval();
 clearTimeout();
 NRF.setAdvertising({},{});
 
- //Watch for Set Temp changes
+ //Set Watch for Backlight
+setWatch(function () {
+  if (toggle == 0) {
+    digitalWrite(LED1, 1);
+    toggle = (typeof toggle == 'number' ? toggle : 0) + 1;
+  } else {
+    digitalWrite(LED1, 0);
+    toggle = (typeof toggle == 'number' ? toggle : 0) + -1;
+  }
+}, H4, { repeat:true, edge:'rising', debounce : 24.99961853027 });
+
+//Watch for Set Temp changes
       setWatch(function() {
         st += 1;
         g.clear();
         g.setFontBitmap();
         g.drawString("Set Temp:",0,46);
         g.setFontVector(10);
-        g.drawString(" " + st +"캟",0,52);
+        g.drawString(" " + st +"째F",0,52);
         g.flip();
    }, H2, {repeat: true, debounce : 120, edge:"rising"});
 setWatch(function() {
@@ -123,7 +144,7 @@ setWatch(function() {
         g.setFontBitmap();
         g.drawString("Set Temp:",0,46);
         g.setFontVector(10);
-        g.drawString(" " + st +"캟",0,52);
+        g.drawString(" " + st +"째F",0,52);
         g.flip();
    }, H3, {repeat: true, debounce : 120, edge:"rising"});
 
